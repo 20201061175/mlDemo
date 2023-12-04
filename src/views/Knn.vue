@@ -1,5 +1,12 @@
 <template>
   <e-charts style="margin-top: 3%;" class="chart" :option="option"/>
+  <div style="display: flex;">
+    数据集选择：
+    <RadioGroup v-model:value="data">
+      <RadioButton value="1">数据集1</RadioButton>
+      <RadioButton value="2">数据集2</RadioButton>
+    </RadioGroup>
+  </div>
   <Row style="margin-top: 2%;">
     K：
     <Col :span="8">
@@ -22,8 +29,7 @@
 import {ref, watch} from 'vue';
 import * as echarts from 'echarts';
 import ecStat from 'echarts-stat';
-import { Alert, Row, Col, Input, Slider } from 'ant-design-vue';
-import { data1 } from '../data'
+import { Row, Col, Input, Slider, RadioGroup, RadioButton } from 'ant-design-vue';
 
 echarts.registerTransform(ecStat.transform.regression);
 
@@ -31,6 +37,7 @@ const msg = ref('-------------')
 const lineName = ref('null')
 let startNode = ref([0, 0])
 let endNode = ref([25, 0])
+let data = ref('1')
 const markLineOpt = ref({
   animation: false,
   label: {
@@ -54,15 +61,70 @@ const markLineOpt = ref({
     ]
   ]
 })
+// 大圆数据
+var bigCircleData = [];
+var radius_big = 2;
+for (var theta = 0; theta < 2*Math.PI; theta += 0.1) {
+    var x = 2.5 + radius_big * Math.cos(theta);
+    var y = 2.5 + radius_big * Math.sin(theta);
+    bigCircleData.push([x, y]);
+}
+
+// 小圆1数据
+var smallCircle1Data = [];
+var radius_small1 = 0.5;
+for (var theta = 0; theta < 2*Math.PI; theta += 2*Math.PI/20) {
+    var x = 2.5 + radius_small1 * Math.cos(theta);
+    var y = 3.5 + radius_small1 * Math.sin(theta);
+    smallCircle1Data.push([x, y]);
+}
+
+// 小圆2数据
+var smallCircle2Data = [];
+var radius_small2 = 1;
+for (var theta = 0; theta < 2*Math.PI; theta += 2*Math.PI/80) {
+    var x = 2.5 + radius_small2 * Math.cos(theta);
+    var y = 1.8 + radius_small2 * Math.sin(theta);
+    smallCircle2Data.push([x, y]);
+}
+const data2 = [...bigCircleData.map(item => ({x: item[0], y: item[1], class: 'A'})),
+...smallCircle1Data.map(item => ({x: item[0], y: item[1], class: 'B'})),
+...smallCircle2Data.map(item => ({x: item[0], y: item[1], class: 'C'}))]
+
+const data1 = [
+  { x: 1, y: 2, class: 'A' },
+  { x: 2, y: 1, class: 'A' },
+  { x: 2, y: 3, class: 'A' },
+  { x: 1, y: 3.5, class: 'A' },
+  { x: 1.5, y: 3.9, class: 'A' },
+  { x: 3, y: 4, class: 'A' },
+  { x: 4, y: 5, class: 'B' },
+  { x: 5, y: 4, class: 'B' },
+  { x: 4.5, y: 4, class: 'B' },
+  { x: 3.5, y: 3.9, class: 'B' },
+  { x: 3.5, y: 3, class: 'B' },
+  { x: 2.5, y: 2.9, class: 'B' },
+  { x: 5, y: 1, class: 'C' },
+  { x: 4, y: 0.5, class: 'C' },
+  { x: 4.5, y: 0.8, class: 'C' },
+  { x: 4, y: 0.3, class: 'C' },
+  { x: 3, y: 2, class: 'C' },
+  { x: 3.5, y: 1.8, class: 'C' },
+];
+
 const border0 = ref([] as any)
 const border1 = ref([] as any)
 const border2 = ref([] as any)
+const point0 = ref(data1.filter(item => 
+      item['class'] === 'A'
+).map(item => [item['x'], item['y']]) as any)
+const point1 = ref(data1.filter(item => 
+      item['class'] === 'B'
+).map(item => [item['x'], item['y']]) as any)
+const point2 = ref(data1.filter(item => 
+      item['class'] === 'C'
+).map(item => [item['x'], item['y']]) as any)
 const option = ref({
-  dataset: [
-    {
-      source: data1
-    }
-  ],
   title: {
     text: 'KNN',
     subtext: ' ',
@@ -106,42 +168,20 @@ const option = ref({
       data: border1
     },
     {
-      name: 'aa',
+      name: 'a',
       type: 'scatter',
-      data: [
-        [1,2],
-        [2,1],
-        [2,3],
-        [1,3.5],
-        [1.5,3.9],
-        [3,4],
-      ]
+      data: point0
     },
     {
-      name: 'bb',
+      name: 'b',
       type: 'scatter',
-      data: [
-        [4,5],
-        [5,4],
-        [4.5,4],
-        [3.5,3.9],
-        [3.5,3],
-        [2.5,2.9],
-      ]
+      data: point1
     },
     {
-      name: 'cc',
+      name: 'c',
       type: 'scatter',
-      data: [
-        [5,1],
-        [4,0.5],
-        [4.5,0.8],
-        [4,0.3],
-        [3,2],
-        [3.5,1.8],
-      ]
+      data: point2
     },
-    
   ]
 })
 
@@ -186,27 +226,6 @@ function predictClass(k:any, testSample:any, data:any) {
   return result;
 }
 
-const data = [
-  { x: 1, y: 2, class: 'A' },
-  { x: 2, y: 1, class: 'A' },
-  { x: 2, y: 3, class: 'A' },
-  { x: 1, y: 3.5, class: 'A' },
-  { x: 1.5, y: 3.9, class: 'A' },
-  { x: 3, y: 4, class: 'A' },
-  { x: 4, y: 5, class: 'B' },
-  { x: 5, y: 4, class: 'B' },
-  { x: 4.5, y: 4, class: 'B' },
-  { x: 3.5, y: 3.9, class: 'B' },
-  { x: 3.5, y: 3, class: 'B' },
-  { x: 2.5, y: 2.9, class: 'B' },
-  { x: 5, y: 1, class: 'C' },
-  { x: 4, y: 0.5, class: 'C' },
-  { x: 4.5, y: 0.8, class: 'C' },
-  { x: 4, y: 0.3, class: 'C' },
-  { x: 3, y: 2, class: 'C' },
-  { x: 3.5, y: 1.8, class: 'C' },
-];
-
 const k = ref(5);
 
 // 节流函数
@@ -235,7 +254,7 @@ function findBorder() {
   const cc = []
   for (let i = 0; i < x.length; i++) {
     for (let j = 0; j < y.length; j++) {
-      const pred = predictClass(k.value, { x: x[i], y: y[j] }, data)
+      const pred = predictClass(k.value, { x: x[i], y: y[j] }, (data.value === '1' ? data1 : data2))
       
       if (pred === 'A') {
         aa.push([x[i], y[j]])
@@ -258,6 +277,23 @@ findBorder()
 
 watch([k], () => {
   f()
+})
+
+watch([data], () => {
+  if (k.value === 2) {
+    k.value = 3
+  } else {
+    k.value = 2
+  }
+  point0.value = (data.value === '1' ? data1 : data2).filter(item => 
+    item['class'] === 'A'
+  ).map(item => [item['x'], item['y']])
+  point1.value = (data.value === '1' ? data1 : data2).filter(item => 
+    item['class'] === 'B'
+  ).map(item => [item['x'], item['y']])
+  point2.value = (data.value === '1' ? data1 : data2).filter(item => 
+    item['class'] === 'C'
+  ).map(item => [item['x'], item['y']])
 })
 
 </script>

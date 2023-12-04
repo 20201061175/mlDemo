@@ -1,5 +1,9 @@
 <template>
   <e-charts style="margin-top: 3%;" class="chart" :option="option"/>
+  <div style="display: flex;">
+    训练过程慢动作：
+    <Switch v-model:checked="slow" checked-children="开" un-checked-children="关" />
+  </div>
   <Row style="margin-top: 2%;">
     学习率：
     <Col :span="8">
@@ -30,15 +34,15 @@
       />
     </Col>
   </Row>
-  <Alert style="margin-top: 2%;"  :message="msg" type="success" />
+  <Alert style="margin-top: 2%;"  :message="h('pre',{}, msg)" type="success" />
 </template>
 
 <script setup>
 
-import {ref, watch} from 'vue';
+import {ref, watch, h} from 'vue';
 import * as echarts from 'echarts';
 import ecStat from 'echarts-stat';
-import { Alert, Row, Col, Input, Slider } from 'ant-design-vue';
+import { Alert, Row, Col, Input, Slider, Switch } from 'ant-design-vue';
 import { data5 } from '../data'
 
 
@@ -46,6 +50,7 @@ const lineName = ref('null')
 let startNode = ref([0, 0])
 let endNode = ref([25, 0])
 const border0 = ref([])
+const slow = ref(false)
 const border1 = ref([])
 const option = ref({
   title: {
@@ -76,7 +81,7 @@ const option = ref({
   },
   series: [
     {
-      name: 'cccc',
+      name: 'a',
       type: 'scatter',
       emphasis: {
         focus: 'series'
@@ -84,7 +89,7 @@ const option = ref({
       data: border0
     },
     {
-      name: 'dddd',
+      name: 'b',
       type: 'scatter',
       emphasis: {
         focus: 'series'
@@ -92,7 +97,7 @@ const option = ref({
       data: border1
     },
     {
-      name: 'bbb',
+      name: 'A',
       type: 'scatter',
       emphasis: {
         focus: 'series'
@@ -100,7 +105,7 @@ const option = ref({
       data: data5.filter(item => item[2] === 0).map(item => [item[0], item[1]])
     },
     {
-      name: 'aaa',
+      name: 'B',
       type: 'scatter',
       emphasis: {
         focus: 'series'
@@ -110,7 +115,7 @@ const option = ref({
   ]
 })
 
-const msg = ref('-------------')
+const msg = ref('')
 
 // 节流函数
 function throttle(fn, time) {
@@ -145,8 +150,15 @@ class LogisticRegression {
     return this.sigmoid(z);
   }
 
+  changeLine(a, b) {
+    setTimeout(() => {
+      border0.value = a
+      border1.value = b
+    }, 0)
+  } 
+
   train(features, labels, learningRate, numIterations) {
-    msg.value = '-------------'
+    msg.value = ''
     for (let i = 0; i < numIterations; i++) {
       let errorSum = 0;
       for (let j = 0; j < features.length; j++) {
@@ -156,8 +168,21 @@ class LogisticRegression {
         this.weights = this.weights.map((w, k) => w + error * features[j][k] * learningRate);
         this.bias += error * learningRate;
       }
-      if (i % 300 === 0) {
-        msg.value = msg.value + ' 训练中 ' + 'w:' + this.weights + '，b:' + this.bias + '-------------'
+      if (i % 250 === 0) {
+        msg.value = msg.value + ' 训练' + i + '次' + 'w:' + this.weights + '，b:' + this.bias + '\n'
+        if (slow.value) {
+          const a = []
+          const b = []
+          for (let i = 0; i < train.length; i++) {
+            var pred = this.predict(train[i])
+            if (pred < 0.5) {
+              a.push(train[i])
+            } else {
+              b.push(train[i])
+            }
+          }
+          this.changeLine(a, b)
+        }
       }
       if (errorSum === 0) break;
     }

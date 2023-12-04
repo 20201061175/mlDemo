@@ -1,5 +1,12 @@
 <template>
   <e-charts style="margin-top: 3%;" class="chart" :option="option"/>
+  <div style="display: flex;">
+    数据集选择：
+    <RadioGroup v-model:value="data">
+      <RadioButton value="1">数据集1</RadioButton>
+      <RadioButton value="2">数据集2</RadioButton>
+    </RadioGroup>
+  </div>
   <Row style="margin-top: 2%;">
     正则化参数：
     <Col :span="8">
@@ -119,8 +126,8 @@
 import {ref, watch, toRaw} from 'vue';
 import * as echarts from 'echarts';
 import ecStat from 'echarts-stat';
-import { Alert, Row, Col, Input, Slider, RadioGroup, RadioButton } from 'ant-design-vue';
-import { data1, data5 } from '../data'
+import { Row, Col, Input, Slider, RadioGroup, RadioButton } from 'ant-design-vue';
+import { data5, data6 } from '../data'
 var SVM = require('ml-svm');
 
 echarts.registerTransform(ecStat.transform.regression);
@@ -131,8 +138,9 @@ let endNode = ref([25, 0])
 let kernel = ref('gaussian')
 const border0 = ref([] as any)
 const border1 = ref([] as any)
-let a = data5.filter(item => item[2] === 0).map(item => [item[0], item[1]])
-let b = data5.filter(item => item[2] === 1).map(item => [item[0], item[1]])
+const data = ref('1')
+let a = ref(data5.filter(item => item[2] === 0).map(item => [item[0], item[1]]))
+let b = ref(data5.filter(item => item[2] === 1).map(item => [item[0], item[1]]))
 
 const option = ref({
   title: {
@@ -163,7 +171,7 @@ const option = ref({
   },
   series: [
     {
-      name: 'ccc',
+      name: 'a',
       type: 'scatter',
       emphasis: {
         focus: 'series'
@@ -171,7 +179,7 @@ const option = ref({
       data: border0
     },
     {
-      name: 'ddd',
+      name: 'b',
       type: 'scatter',
       emphasis: {
         focus: 'series'
@@ -179,7 +187,7 @@ const option = ref({
       data: border1
     },
     {
-      name: 'aaa',
+      name: 'A',
       type: 'scatter',
       emphasis: {
         focus: 'series'
@@ -187,7 +195,7 @@ const option = ref({
       data: a
     },
     {
-      name: 'bbb',
+      name: 'B',
       type: 'scatter',
       emphasis: {
         focus: 'series'
@@ -237,8 +245,8 @@ function findBorder() {
   };
   let svm = new SVM(options);
 
-  let features = [...a,...b];
-  let labels = [...Array(a.length).fill(-1), ...Array(b.length).fill(1)];
+  let features = [...a.value,...b.value];
+  let labels = [...Array(a.value.length).fill(-1), ...Array(b.value.length).fill(1)];
   svm.train(features, labels);
 
   // 预测
@@ -248,7 +256,9 @@ function findBorder() {
   border1.value = train.filter((item: any, index: any) => res[index] === 1)
 }
 findBorder()
-watch([kernel, C, tol, alphaTol, sigma, degree, constant, scale], () => {
+watch([kernel, C, tol, alphaTol, sigma, degree, constant, scale, data], () => {
+  a.value = (data.value === '1' ? data5 : data6).filter(item => item[2] === 0).map(item => (data.value === '1' ? [item[0], item[1]] : [item[0]*50+50, item[1]*50+50]))
+  b.value = (data.value === '1' ? data5 : data6).filter(item => item[2] === 1).map(item => (data.value === '1' ? [item[0], item[1]] : [item[0]*50+50, item[1]*50+50]))
   findBorder()
 })
 

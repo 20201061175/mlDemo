@@ -1,5 +1,9 @@
 <template>
   <e-charts style="margin-top: 3%;" class="chart" :option="option"/>
+  <div style="display: flex;">
+    训练过程慢动作：
+    <Switch v-model:checked="slow" checked-children="开" un-checked-children="关" />
+  </div>
   <Row style="margin-top: 2%;">
     学习率：
     <Col :span="8">
@@ -45,22 +49,26 @@
       />
     </Col>
   </Row>
-  <Alert style="margin-top: 2%;"  :message="msg" type="success" />
+  <div style="display: flex;">
+    <Alert style="margin-top: 2%; width: 40%;"  :message="h('pre',{}, msg)" type="success" />
+  </div>
 </template>
 
 <script lang="ts" setup>
 
-import {ref, watch} from 'vue';
+import {ref, watch, h} from 'vue';
 import * as echarts from 'echarts';
 import ecStat from 'echarts-stat';
-import { Alert, Row, Col, Input, Slider } from 'ant-design-vue';
+import { Alert, Row, Col, Input, Slider, Switch } from 'ant-design-vue';
 import { data1 } from '../data'
+import { SHOW_ALL } from 'ant-design-vue/es/vc-tree-select/utils/strategyUtil';
 
 echarts.registerTransform(ecStat.transform.regression);
 
 const lineName = ref('null')
 let startNode = ref([0, 0])
 let endNode = ref([25, 0])
+let slow = ref(false)
 const markLineOpt = ref({
   animation: false,
   label: {
@@ -119,7 +127,7 @@ const option = ref({
   },
   series: [
     {
-      name: 'scatter',
+      name: '',
       type: 'scatter',
       markLine: markLineOpt,
     }
@@ -182,8 +190,20 @@ function throttle(fn: any, time: any) {
     }
 }
 
+function changeLine(w: any, b: any, time: any) {
+  setTimeout(() => {
+    
+    lineName.value = 'w=' + w + ' ,  b=' + b
+    // 5 0 
+    // 22 22 
+    startNode.value = startNode.value[0] < 5 || startNode.value[0] * w + b < 0 ? [4, 4 * w + b] : [startNode.value[0], startNode.value[0] * w + b]
+    endNode.value = endNode.value[0] > 22 || endNode.value[0] * w + b > 22 ? [22, 22 * w + b] : [endNode.value[0], endNode.value[0] * w + b]
+    console.log(w, b, startNode.value, endNode.value)
+  }, time)
+}
+
 function excute() {
-  msg.value = '-------------'
+  msg.value = ''
   let w = Math.random()
   let b = Math.random()
   for (let i = 0; i < iter.value + 1; i++) {
@@ -200,18 +220,18 @@ function excute() {
     w = w - learn_rate.value * dw
     b = b - learn_rate.value * db
 
+    if (i % 3 === 0) {
+      if (slow.value) {
+        changeLine(w, b, 0)
+      }
+    }
+
     if (i % display_step.value === 0) {
       console.log('训练中', w, b)
-      msg.value = msg.value + '   训练中 ' + 'w:' + w + '，b:' + b + '-------------'
+      msg.value = msg.value + '   训练' + i + '次' + 'w:' + w + '，b:' + b + '\n'
     }
   }
-
-  lineName.value = 'w=' + w + ' ,  b=' + b
-  // 5 0 
-  // 22 22 
-  startNode.value = startNode.value[0] < 5 || startNode.value[0] * w + b < 0 ? [4, 4 * w + b] : [startNode.value[0], startNode.value[0] * w + b]
-  endNode.value = endNode.value[0] > 22 || endNode.value[0] * w + b > 22 ? [22, 22 * w + b] : [endNode.value[0], endNode.value[0] * w + b]
-  console.log(w, b, startNode.value, endNode.value)
+  changeLine(w, b, 0)
 }
 
 excute()
