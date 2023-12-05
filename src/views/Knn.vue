@@ -280,11 +280,6 @@ watch([k], () => {
 })
 
 watch([data], () => {
-  if (k.value === 2) {
-    k.value = 3
-  } else {
-    k.value = 2
-  }
   point0.value = (data.value === '1' ? data1 : data2).filter(item => 
     item['class'] === 'A'
   ).map(item => [item['x'], item['y']])
@@ -294,6 +289,7 @@ watch([data], () => {
   point2.value = (data.value === '1' ? data1 : data2).filter(item => 
     item['class'] === 'C'
   ).map(item => [item['x'], item['y']])
+  f()
 })
 
 </script>
