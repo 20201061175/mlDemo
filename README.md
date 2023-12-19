@@ -1,19 +1,2 @@
-# project
-
-## Project setup
-```
-yarn install
-```
-
-### Compiles and hot-reloads for development
-```
-yarn serve
-```
-
-### Compiles and minifies for production
-```
-yarn build
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+# 机器学习大作业--机器学习算法可视化平台
+依托于前端vue框架，下载后yarn install、yarn serve本地运行项目
